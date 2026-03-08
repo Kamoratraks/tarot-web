@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔮 เปิดไพ่เช็คดวงสไตล์เพื่อนสาว</title>
+    <title>🔮 เปิดไพ่เช็คดวง (6 ใบ)</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         body {
@@ -23,11 +23,11 @@
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            max-width: 500px;
+            max-width: 550px;
             width: 100%;
             text-align: center;
         }
-        h1 { color: #e94560; margin-bottom: 5px; }
+        h1 { color: #e94560; margin-bottom: 5px; font-size: 24px; }
         p { color: #a2a2a2; margin-bottom: 20px; font-size: 14px; }
         textarea {
             width: 100%;
@@ -75,10 +75,10 @@
 <body>
 
     <div class="container">
-        <h1>🔮 ดูดวงกับเพื่อนสาว</h1>
-        <p>เปิดไพ่ 6 ใบเน้นๆ ยิปซี 3 ออราเคิล 3 ถามมาเลยแก!</p>
+        <h1>🔮 ดูดวงเปิดไพ่ 6 ใบ</h1>
+        <p>ตั้งสมาธิ พิมพ์คำถามให้ชัดเจน แล้วกดสับไพ่</p>
         
-        <textarea id="userQuestion" placeholder="พิมพ์คำถามมาเลยแก... (เช่น สิ้นเดือนนี้จะมีเงินเก็บมั้ย?)"></textarea>
+        <textarea id="userQuestion" placeholder="พิมพ์คำถามของคุณที่นี่... (เช่น การงานช่วงนี้จะเป็นยังไงบ้างคะ?)"></textarea>
         <button onclick="getReading()" id="submitBtn">สับไพ่และทำนาย 🃏</button>
         
         <div id="result"></div>
@@ -91,13 +91,13 @@
             const btn = document.getElementById('submitBtn');
 
             if (!question) {
-                alert('พิมพ์คำถามมาก่อนสิแก!');
+                alert('กรุณาพิมพ์คำถามก่อนนะคะ');
                 return;
             }
 
             // แสดงสถานะกำลังโหลด
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<div class="loading">กำลังสับไพ่และรับพลังงาน... รอแป๊บนึงนะแก ✨</div>';
+            resultDiv.innerHTML = '<div class="loading">กำลังสับไพ่และรับพลังงาน... รอสักครู่นะคะ ✨</div>';
             btn.disabled = true;
             btn.style.opacity = '0.6';
 
@@ -105,17 +105,27 @@
             const apiKey = 'AIzaSyAXvR9umCvZhwxq4VDCvaGpBovaBpF9cSo'; 
             const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey;
 
-            // System Prompt กฎเหล็กของเรา
-            const systemPrompt = `คุณคือเพื่อนสนิทที่ดูดวงแม่นมาก ใช้ภาษาวัยรุ่น ภาษากันเอง (แก, เรา, ฟีลแบบ, จึ้ง) ตรงไปตรงมา
-กฎเหล็ก:
-1. Zero Personal History: ห้ามใช้ข้อมูลส่วนตัวหรือประวัติใดๆ ของผู้ถามเด็ดขาด ทุกคำถามคือการเริ่มใหม่
-2. Fact-Based on Cards ONLY: คำทำนายต้องมาจากหน้าไพ่ 6 ใบที่สุ่มได้ในรอบนี้เท่านั้น ห้ามเดาเอาเอง
-3. Auto-Draw 6 Cards: สุ่มไพ่ใหม่ 6 ใบเสมอ (ยิปซี 3 ใบ มีโอกาสกลับหัว + ออราเคิล 3 ใบ)
-ตำแหน่งไพ่: ยิปซี 1,2,3 (อดีต,ปัจจุบัน,อนาคต) และ ออราเคิล 4,5,6 (ขยายยิปซีแต่ละใบตามลำดับ)
-รูปแบบการตอบ: ทักทายทวนคำถาม -> เปิดหน้าไพ่ 6 ใบให้เห็น -> เล่าเป็นเรื่องราว -> สรุปฟันธง`;
+            // System Prompt กฎเหล็ก (ฉบับอัปเดตภาษาเป็นธรรมชาติ)
+            const systemPrompt = `คุณคือคนดูดวงที่กำลังเปิดไพ่ตอบคำถามให้พี่น้องหรือคนสนิท
+สไตล์การพูด: ใช้ภาษาพูดธรรมดา เป็นธรรมชาติ จริงใจ เหมือนพี่คุยกับน้อง หรือเพื่อนคุยกัน (เช่น ใช้คำว่า พี่, หนู, ตัวเอง, เค้า, ค่ะ/นะคะ) ห้ามใช้คำแสลงที่ดูฝืนประดิษฐ์เด็ดขาด อธิบายความหมายไพ่ให้เคลียร์ ชัดเจน มีเหตุมีผลมารองรับ ไม่อ้อมค้อม ความยาวกำลังพอดี ไม่อ่านยาก 
+
+กฎเหล็กที่ห้ามฝ่าฝืนเด็ดขาด:
+1. Zero Personal History: ห้ามใช้ข้อมูลส่วนตัวหรือประวัติใดๆ ของผู้ถามจากการสนทนาเก่ามาตอบเด็ดขาด ให้ตอบเฉพาะสิ่งที่ไพ่ในรอบนี้สื่อออกมาเท่านั้น
+2. Fact-Based on Cards ONLY: คำทำนายต้องแปลมาจากหน้าไพ่ 6 ใบที่สุ่มได้ในรอบนี้ 100% ห้ามเดาเอาเองจากสถิติหรือความน่าจะเป็นทั่วไป
+3. Auto-Draw 6 Cards: สุ่มไพ่ใหม่ 6 ใบเสมอ ประกอบด้วย ไพ่ยิปซี 3 ใบ (มีโอกาสสุ่มได้หัวกลับ/Reversed) และ ไพ่ออราเคิล 3 ใบ
+
+ตำแหน่งไพ่ 6 ใบ:
+- ยิปซี 3 ใบ: ใบที่ 1 (อดีต/รากฐาน) - ใบที่ 2 (ปัจจุบัน/สถานการณ์) - ใบที่ 3 (อนาคต/บทสรุป)
+- ออราเคิล 3 ใบ: ใบที่ 4 (ขยายใบที่ 1) - ใบที่ 5 (ขยายใบที่ 2) - ใบที่ 6 (ขยายใบที่ 3)
+
+รูปแบบการตอบ (Output Format):
+1. ทวนคำถาม: พิมพ์หัวข้อคำถามสั้นๆ
+2. หน้าไพ่ที่ได้: ลิสต์ชื่อไพ่ทั้ง 6 ใบ
+3. คำทำนาย: วิเคราะห์แบบเจาะลึกแต่อ่านง่าย แบ่งเป็นข้อๆ (Bullet points) ตามหน้าไพ่แต่ละใบ อธิบายว่าไพ่อยากบอกอะไร เน้นความชัดเจน
+4. สรุป: ขมวดปมตอบคำถามให้ชัดเจนใน 1-2 ประโยค ว่าสรุปแล้วทิศทางเป็นอย่างไร`;
 
             try {
-                // ส่งเฉพาะ System Prompt + คำถามปัจจุบัน (ไม่มี History ใดๆ ทั้งสิ้น)
+                // ส่งเฉพาะ System Prompt + คำถามปัจจุบัน
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -133,11 +143,11 @@
                 if (data.candidates && data.candidates[0]) {
                     resultDiv.innerHTML = data.candidates[0].content.parts[0].text;
                 } else {
-                    resultDiv.innerHTML = 'อุ๊ย ระบบช็อตฟีล ลองถามใหม่อีกทีนะแก!';
+                    resultDiv.innerHTML = 'เกิดข้อผิดพลาดในการดึงข้อมูลหน้าไพ่ ลองถามใหม่อีกครั้งนะคะ';
                 }
             } catch (error) {
                 console.error(error);
-                resultDiv.innerHTML = 'เกิดข้อผิดพลาดในการเชื่อมต่อจักรวาล ลองใหม่อีกรอบนะ!';
+                resultDiv.innerHTML = 'ระบบขัดข้อง ไม่สามารถเชื่อมต่อได้ในขณะนี้ รบกวนลองใหม่อีกครั้งค่ะ';
             } finally {
                 btn.disabled = false;
                 btn.style.opacity = '1';
