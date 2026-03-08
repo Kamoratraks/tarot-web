@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔮 เปิดไพ่เช็คดวงสไตล์เพื่อนสาว</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #1a1a2e;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #16213e;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 { color: #e94560; margin-bottom: 5px; }
+        p { color: #a2a2a2; margin-bottom: 20px; font-size: 14px; }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #0f3460;
+            background-color: #0f3460;
+            color: #fff;
+            font-family: 'Prompt', sans-serif;
+            font-size: 16px;
+            resize: none;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+        textarea:focus { outline: none; border-color: #e94560; }
+        button {
+            background-color: #e94560;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-family: 'Prompt', sans-serif;
+            width: 100%;
+        }
+        button:hover { background-color: #d93850; }
+        #result {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #0f3460;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 15px;
+            line-height: 1.6;
+            display: none;
+            white-space: pre-wrap;
+        }
+        .loading { color: #e94560; font-weight: bold; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🔮 ดูดวงกับเพื่อนสาว</h1>
+        <p>เปิดไพ่ 6 ใบเน้นๆ ยิปซี 3 ออราเคิล 3 ถามมาเลยแก!</p>
+        
+        <textarea id="userQuestion" placeholder="พิมพ์คำถามมาเลยแก... (เช่น สิ้นเดือนนี้จะมีเงินเก็บมั้ย?)"></textarea>
+        <button onclick="getReading()" id="submitBtn">สับไพ่และทำนาย 🃏</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function getReading() {
+            const question = document.getElementById('userQuestion').value.trim();
+            const resultDiv = document.getElementById('result');
+            const btn = document.getElementById('submitBtn');
+
+            if (!question) {
+                alert('พิมพ์คำถามมาก่อนสิแก!');
+                return;
+            }
+
+            // แสดงสถานะกำลังโหลด
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">กำลังสับไพ่และรับพลังงาน... รอแป๊บนึงนะแก ✨</div>';
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+
+            // ⚠️ จุดที่ต้องใส่ API KEY ของคุณ
+            const apiKey = 'ใส่_API_KEY_ของคุณที่นี่'; 
+            const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey;
+
+            // System Prompt กฎเหล็กของเรา
+            const systemPrompt = `คุณคือเพื่อนสนิทที่ดูดวงแม่นมาก ใช้ภาษาวัยรุ่น ภาษากันเอง (แก, เรา, ฟีลแบบ, จึ้ง) ตรงไปตรงมา
+กฎเหล็ก:
+1. Zero Personal History: ห้ามใช้ข้อมูลส่วนตัวหรือประวัติใดๆ ของผู้ถามเด็ดขาด ทุกคำถามคือการเริ่มใหม่
+2. Fact-Based on Cards ONLY: คำทำนายต้องมาจากหน้าไพ่ 6 ใบที่สุ่มได้ในรอบนี้เท่านั้น ห้ามเดาเอาเอง
+3. Auto-Draw 6 Cards: สุ่มไพ่ใหม่ 6 ใบเสมอ (ยิปซี 3 ใบ มีโอกาสกลับหัว + ออราเคิล 3 ใบ)
+ตำแหน่งไพ่: ยิปซี 1,2,3 (อดีต,ปัจจุบัน,อนาคต) และ ออราเคิล 4,5,6 (ขยายยิปซีแต่ละใบตามลำดับ)
+รูปแบบการตอบ: ทักทายทวนคำถาม -> เปิดหน้าไพ่ 6 ใบให้เห็น -> เล่าเป็นเรื่องราว -> สรุปฟันธง`;
+
+            try {
+                // ส่งเฉพาะ System Prompt + คำถามปัจจุบัน (ไม่มี History ใดๆ ทั้งสิ้น)
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: systemPrompt + "\n\nคำถาม: " + question }
+                            ]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates[0]) {
+                    resultDiv.innerHTML = data.candidates[0].content.parts[0].text;
+                } else {
+                    resultDiv.innerHTML = 'อุ๊ย ระบบช็อตฟีล ลองถามใหม่อีกทีนะแก!';
+                }
+            } catch (error) {
+                console.error(error);
+                resultDiv.innerHTML = 'เกิดข้อผิดพลาดในการเชื่อมต่อจักรวาล ลองใหม่อีกรอบนะ!';
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        }
+    </script>
+</body>
+</html>
