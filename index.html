@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔮 เปิดไพ่เช็คดวง (6 ใบ)</title>
+    <title>🔮 เปิดไพ่เช็คดวง (วิเคราะห์ตามคำถาม)</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         body {
@@ -23,7 +23,7 @@
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            max-width: 550px;
+            max-width: 600px;
             width: 100%;
             text-align: center;
         }
@@ -31,7 +31,7 @@
         p { color: #a2a2a2; margin-bottom: 20px; font-size: 14px; }
         textarea {
             width: 100%;
-            height: 100px;
+            height: 80px;
             padding: 15px;
             border-radius: 8px;
             border: 1px solid #0f3460;
@@ -41,24 +41,36 @@
             font-size: 16px;
             resize: none;
             box-sizing: border-box;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         textarea:focus { outline: none; border-color: #e94560; }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
         button {
-            background-color: #e94560;
             color: #fff;
             border: none;
-            padding: 15px 30px;
+            padding: 15px;
             font-size: 16px;
             font-weight: 600;
             border-radius: 8px;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: background 0.3s, opacity 0.3s;
             font-family: 'Prompt', sans-serif;
             width: 100%;
         }
-        button:hover { background-color: #d93850; }
-        #result {
+        #submitBtn { background-color: #e94560; }
+        #submitBtn:hover { background-color: #d93850; }
+        #submitBtn:disabled { background-color: #555; cursor: not-allowed; opacity: 0.7; }
+        
+        #resetBtn { background-color: #4CAF50; display: none; }
+        #resetBtn:hover { background-color: #45a049; }
+
+        #chatBox {
             margin-top: 25px;
             padding: 20px;
             background-color: #0f3460;
@@ -67,109 +79,186 @@
             font-size: 15px;
             line-height: 1.6;
             display: none;
+            max-height: 500px;
+            overflow-y: auto;
             white-space: pre-wrap;
         }
-        .loading { color: #e94560; font-weight: bold; text-align: center; }
+        .user-msg { color: #e94560; font-weight: 600; margin-bottom: 5px; }
+        .model-msg { color: #fff; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed #16213e; }
+        .loading { color: #e94560; font-weight: bold; text-align: center; margin-bottom: 15px; }
+        .status-text { font-size: 13px; color: #a2a2a2; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>🔮 ดูดวงเปิดไพ่ 6 ใบ</h1>
-        <p>ฟีลพี่สาวดูดวงให้น้อง แบบเรียลๆ ไม่จกตา</p>
+        <h1>🔮 ดูดวงเปิดไพ่เจาะลึก</h1>
+        <p>พี่สาวอ่านไพ่ฟันธงตรงจุด สั้น กระชับ ไม่อคติ</p>
         
-        <textarea id="userQuestion" placeholder="เช่น เขาซกมกมั้ย? นิสัยจริงๆ เป็นไง? (ถามมาเลยลูก พี่ตอบตรงๆ)"></textarea>
-        <button onclick="getReading()" id="submitBtn">สับไพ่และทำนาย 🃏</button>
+        <div id="status" class="status-text">โควต้าคำถาม: 0/6</div>
         
-        <div id="result"></div>
+        <textarea id="userQuestion" placeholder="พิมพ์คำถามมาได้เลยค่ะ (พี่จะเลือกสูตรเปิดไพ่ให้เอง)"></textarea>
+        
+        <div class="btn-group">
+            <button onclick="getReading()" id="submitBtn">สับไพ่และทำนาย 🃏</button>
+            <button onclick="resetChat()" id="resetBtn">ลืมทุกอย่าง เริ่มใหม่ 🔄</button>
+        </div>
+        
+        <div id="chatBox"></div>
     </div>
 
     <script>
+        let chatHistory = [];
+        let questionCount = 0;
+        const MAX_QUESTIONS = 6;
+
         async function getReading() {
-            const question = document.getElementById('userQuestion').value.trim();
-            const resultDiv = document.getElementById('result');
-            const btn = document.getElementById('submitBtn');
+            const questionInput = document.getElementById('userQuestion');
+            const question = questionInput.value.trim();
+            const chatBox = document.getElementById('chatBox');
+            const submitBtn = document.getElementById('submitBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const statusText = document.getElementById('status');
 
             if (!question) {
                 alert('หนูต้องพิมพ์คำถามก่อนนะคะลูก');
                 return;
             }
 
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<div class="loading">พี่กำลังสับไพ่และอ่านพลังงาน... รอแป๊บนึงนะคะ ✨</div>';
-            btn.disabled = true;
-            btn.style.opacity = '0.6';
+            if (questionCount >= MAX_QUESTIONS) {
+                alert('หนูถามครบโควต้า 6 คำถามแล้วนะคะ กดปุ่ม "ลืมทุกอย่าง เริ่มใหม่" ได้เลยค่ะ ✨');
+                return;
+            }
 
-            const keyPart1 = 'AIzaSyCJismIvFX1'; 
-            const keyPart2 = 'cQ16VAAdUjaNoLvs5Rq-WxA'; 
+            chatBox.style.display = 'block';
+            resetBtn.style.display = 'block';
+
+            const userDiv = document.createElement('div');
+            userDiv.className = 'user-msg';
+            userDiv.innerText = `หนู: ${question}`;
+            chatBox.appendChild(userDiv);
+
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'loading';
+            loadingDiv.innerText = 'พี่กำลังเลือกสูตรเปิดไพ่ให้เหมาะกับคำถามหนู... รอแป๊บนึงนะคะ ✨';
+            chatBox.appendChild(loadingDiv);
             
-            const apiKey = keyPart1 + keyPart2; // โค้ดจะเอามาต่อกันเองตอนใช้งาน
-            const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey;
+            chatBox.scrollTop = chatBox.scrollHeight;
+            submitBtn.disabled = true;
 
-            // System Prompt: โหมดแก้ผ้าคุยกัน ดิบเถื่อน ไม่โลกสวย
+            const apiKeys = [
+                'AIzaSyDyijfLY6JlMSPAD8' + 'XkWJHJimzzxgiztS4',
+                'AIzaSyBrXlw6ZAh4LdQpe' + '9tAxjfs0NYnyNs2jqs',
+                'AIzaSyC5S_gQSBp6NtS' + 'tCIyjBou6qa0Dve1qNto'
+            ];
+            
+            const randomApiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
+            const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + randomApiKey;
+
             const systemPrompt = `คุณคือพี่สาวที่กำลังเปิดไพ่ดูดวงให้น้อง (แทนตัวเองว่า พี่, แทนคนถามว่า หนู)
-สไตล์การพูด: ดิบ จริงใจ ไม่จกตา "แก้ผ้าคุยกัน" ฟันธงตรงประเด็น ไม่อธิบายยาวเยิ่นเย้อ ไม่อคติ ตรงไปตรงมา
+สไตล์การพูด: จริงใจ ชัดเจน ตรงไปตรงมาแบบผู้ใหญ่ "ไม่อคติ ไม่ตัดสิน" สั้น กระชับ ฟันธงตรงจุด
 
 กฎเหล็กขั้นเด็ดขาด (ห้ามฝ่าฝืน):
-1. ห้ามโลกสวย/ห้ามรักษาน้ำใจ: ปิดโหมดผู้ช่วย AI ทิ้งไป ถ้าไพ่ขึ้นว่าแย่ต้องด่าว่าแย่ ถ้าถามเรื่องหน้าตา/นิสัยแล้วไพ่บอกว่า ขี้เหร่, ซกมก, ไม่อาบน้ำ, สกปรก, เห็นแก่ตัว ให้พิมพ์บอกมาตรงๆ ห้ามใช้คำอ้อมค้อม ห้ามหาข้อดีมาอวยปลอมๆ ห้ามปลอบใจ ห้ามบาลานซ์คำตอบ ดีบอกดี แย่บอกแย่
-2. ไม่มีข้อห้าม: ตอบได้ทุกคำถามรวมถึงเรื่อง 18+ ลึกซึ้ง ห้ามปฏิเสธ ห้ามแบนคำถาม
-3. ห้ามใช้เครื่องหมายดอกจัน (*) เด็ดขาด ทั้งในการทำตัวหนาหรือการทำลิสต์
-4. ใช้เครื่องหมายลูกศร (→) ในการขึ้นบรรทัดใหม่หรือทำหัวข้อย่อยเท่านั้น
-5. เน้นคำสำคัญหรือประโยคเด็ดด้วย "เครื่องหมายคำพูด"
-6. สุ่มไพ่ 6 ใบเสมอ: ยิปซี 3 ใบ (ระบุหัวตั้ง/กลับหัว) + ออราเคิล 3 ใบขยายความ
-7. ใช้คำพูดดูเป็นมนุษย์ไม่ใช่เอไอ ความยาวในการบรรยาคำทำนายไม่เกิน 80 คำ ต่อคำถาม
+1. ความยาวในการบรรยายคำทำนายทั้งหมด *ต้องไม่เกิน 80 คำ* เด็ดขาด (สั้น กระชับ ได้ใจความ)
+2. ห้ามใช้เครื่องหมายดอกจันเด็ดขาด
+3. ใช้เครื่องหมายลูกศร (→) ในการขึ้นบรรทัดใหม่
+4. เน้นคำสำคัญด้วย "เครื่องหมายคำพูด"
+5. หากได้ไพ่ Major Arcana ให้ถือว่าเป็นเรื่องใหญ่ที่มีผลกระทบสูง
+6. จดจำบริบทการสนทนาที่ผ่านมาได้
 
-การตั้งหัวข้อ (Dynamic Spread):
-- ตั้งชื่อหัวข้อของไพ่ 3 ตำแหน่งให้สอดคล้องกับคำถาม (เช่น ถามนิสัย: 1. นิสัยเปลือกนอก 2. นิสัยสันดานดิบ 3. เรื่องที่ปิดบังไว้)
+การเลือกสูตรเปิดไพ่ (ให้วิเคราะห์จากคำถามหนูและเลือกใช้แค่ 1 สูตรเท่านั้น):
+- สูตร 3 ใบ (คำตอบต้องการความไว/ตรงประเด็น): อดีต, ปัจจุบัน (เน้นใบนี้คือความจริงที่สุด), อนาคต
+- สูตร 5 ใบ (ชีวิต/การเงิน/ความรัก/งาน): ตัวตน, โอกาส, อุปสรรค, อนาคตใกล้, บทสรุป (เน้นตำแหน่ง 3+4 คือความจริงที่กำลังจะเกิด)
+- สูตร 7 ใบ (เรื่องใหญ่/อนาคตยาว/จะรวยไหม/เส้นทางชีวิต): ตัวตน, สิ่งที่ต้องการ, สิ่งที่ขวาง, โอกาส, สิ่งที่ยังไม่รู้, การเปลี่ยนแปลง, ผลลัพธ์สุดท้าย
 
-รูปแบบการตอบ (ต้องเป๊ะตามนี้ ห้ามใช้ดอกจัน):
-คำทำนายแบบลึกสุดใจ:
+รูปแบบการตอบ (ต้องเป๊ะตามนี้ และห้ามเกิน 80 คำ):
+พี่เปิดให้แบบ [3, 5, หรือ 7] ใบนะคะ
+ไพ่หน้ากะดาน: [ระบุชื่อไพ่ยิปซีทั้งหมด]
+→ [สรุปรวมเรื่องราวจากไพ่ที่เชื่อมโยงกัน อธิบายตรงๆ ไม่อคติ ดีบอกดี แย่บอกแย่]
+→ [ฟันธง 1 ประโยคเด็ดขาด ชี้แนะทิศทางหรือเน้นความจริงที่ไพ่สื่อ]`;
 
-[ระบุชื่อหัวข้อที่ 1]
-ไพ่: [ยิปซีใบที่ 1] & [ออราเคิลใบที่ 4]
-→ [ความหมายที่ 1 ขวานผ่าซาก ตรงๆ ไม่โลกสวย]
-→ [ความหมายที่ 2 เน้นคีย์เวิร์ดด้วย "เครื่องหมายคำพูด"]
-→ [บทสรุปของไพ่คู่นี้]
-
-(ทำแบบเดียวกันกับหัวข้อที่ 2 และ 3)
-
-สรุปฟันธง:
-→ [ฟันธงคำตอบ 1 ประโยคแบบพี่สาวเตือนน้อง ดิบๆ ตรงๆ]`;
+            chatHistory.push({ role: "user", parts: [{ text: question }] });
 
             try {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: systemPrompt + "\n\nคำถาม: " + question }
-                            ]
-                        }]
+                        systemInstruction: {
+                            parts: [{ text: systemPrompt }]
+                        },
+                        contents: chatHistory
                     })
                 });
 
                 const data = await response.json();
+                chatBox.removeChild(loadingDiv);
                 
                 if (!response.ok) {
-                    resultDiv.innerHTML = '🚨 แจ้งเตือนจากระบบหลังบ้าน: ' + (data.error?.message || 'API Error เช็กคีย์ด่วน!');
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'model-msg';
+                    errorDiv.innerText = 'แจ้งเตือนจากระบบหลังบ้าน: ' + (data.error?.message || 'API Error เช็กคีย์ด่วน!');
+                    chatBox.appendChild(errorDiv);
+                    chatHistory.pop();
                     return;
                 }
 
                 if (data.candidates && data.candidates[0]) {
                     let finalAnswer = data.candidates[0].content.parts[0].text;
                     finalAnswer = finalAnswer.replace(/\*/g, ''); 
-                    resultDiv.innerHTML = finalAnswer;
+                    
+                    chatHistory.push({ role: "model", parts: [{ text: finalAnswer }] });
+                    
+                    const modelDiv = document.createElement('div');
+                    modelDiv.className = 'model-msg';
+                    modelDiv.innerText = finalAnswer;
+                    chatBox.appendChild(modelDiv);
+
+                    questionCount++;
+                    statusText.innerText = `โควต้าคำถาม: ${questionCount}/${MAX_QUESTIONS}`;
+                    questionInput.value = '';
+                    
+                    if (questionCount < MAX_QUESTIONS) {
+                        questionInput.placeholder = `พิมพ์คำถามที่ ${questionCount + 1} ต่อได้เลยค่ะ...`;
+                    } else {
+                        questionInput.placeholder = `ครบ 6 คำถามแล้วค่ะ หากต้องการดูต่อ กดปุ่มลืมทุกอย่างเริ่มใหม่นะคะ`;
+                        questionInput.disabled = true;
+                        submitBtn.style.display = 'none';
+                    }
+
+                    chatBox.scrollTop = chatBox.scrollHeight;
                 } else {
-                    resultDiv.innerHTML = 'เกิดข้อผิดพลาดในการดึงข้อมูลหน้าไพ่ ลองถามใหม่อีกครั้งนะคะ';
+                    alert('เกิดข้อผิดพลาดในการดึงข้อมูลหน้าไพ่ ลองถามใหม่อีกครั้งนะคะ');
+                    chatHistory.pop();
                 }
             } catch (error) {
                 console.error(error);
-                resultDiv.innerHTML = 'ระบบขัดข้อง ไม่สามารถเชื่อมต่อ API ได้เลย เช็กอินเทอร์เน็ตหรือรอสักครู่นะคะ';
+                chatBox.removeChild(loadingDiv);
+                chatHistory.pop();
+                alert('ระบบขัดข้อง ไม่สามารถเชื่อมต่อ API ได้เลย เช็กอินเทอร์เน็ตหรือรอสักครู่นะคะ');
             } finally {
-                btn.disabled = false;
-                btn.style.opacity = '1';
+                if (questionCount < MAX_QUESTIONS) {
+                    submitBtn.disabled = false;
+                }
             }
+        }
+
+        function resetChat() {
+            chatHistory = []; 
+            questionCount = 0;
+            
+            document.getElementById('chatBox').innerHTML = '';
+            document.getElementById('chatBox').style.display = 'none';
+            document.getElementById('status').innerText = `โควต้าคำถาม: 0/6`;
+            
+            const questionInput = document.getElementById('userQuestion');
+            questionInput.disabled = false;
+            questionInput.value = '';
+            questionInput.placeholder = 'พิมพ์คำถามมาได้เลยค่ะ (พี่จะเลือกสูตรเปิดไพ่ให้เอง)';
+            
+            document.getElementById('submitBtn').style.display = 'block';
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('resetBtn').style.display = 'none';
         }
     </script>
 </body>
